@@ -34,7 +34,7 @@
   
   
   # Losowanie paczkomatow, ktore znajda sie na trasie - domyslna liczba = 20
-  set.seed(123)
+  set.seed(142)
   n_boxes <- 20
   indices <- sample(nrow(inpost), n_boxes, replace = FALSE)
   post_box_delivery <- inpost[indices, ]
