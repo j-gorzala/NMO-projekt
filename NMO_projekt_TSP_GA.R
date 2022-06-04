@@ -128,9 +128,10 @@
     
     # Pula rodzicielska (z wykluczeniem elity)
     pool_indices <- sample(setdiff(1:length(selected_population_list), 1:elite_size), 
-                              size = (length(selected_population_list)-elite_size)/2, replace = FALSE)
+                              size = length(selected_population_list)-elite_size, replace = FALSE)
+    
     pool <- selected_population_list[pool_indices]
-  
+    
     if (elite_size != 0) {
     # Przypisywanie elity do nowej populacji (bez krzyzowania)
       for (elite_index in 1:elite_size){
@@ -141,8 +142,8 @@
     indices_odd <- seq(from=1, by=2, length.out=length(pool_indices))
     
     # Krzyzowanie pozostalych reprezentantow populacji
-    for (population_index in 1:(length(pool_indices))){
-      if (population_index != length(pool_indices)){
+    for (population_index in 1:(length(pool_indices)/2)){
+      if (population_index != length(pool_indices)/2){
         parent_a <- pool[[population_index]]$order
         parent_b <- pool[[population_index+1]]$order
       }
@@ -214,7 +215,7 @@
     
     return(new_population_list)
   }
-  
+
   
   
   crossover_operator_2 <- function(selected_population_list, elite_size){
