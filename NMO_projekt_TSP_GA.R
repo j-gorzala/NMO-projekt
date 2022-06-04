@@ -121,43 +121,31 @@
   
   
   
-  crossover_operator_1 <- function(selected_population_list, elite_size){
+  crossover_operator_pmx <- function(selected_population_list){
     # Krzyzowanie - PMX
     
     new_population_list <- vector(mode='list', length=length(selected_population_list))
+    indices_odd <- seq(from=1, by=2, length.out=length(new_population_list))
     
-    # Pula rodzicielska (z wykluczeniem elity)
-    pool_indices <- sample(setdiff(1:length(selected_population_list), 1:elite_size), 
-                              size = length(selected_population_list)-elite_size, replace = FALSE)
-    
-    pool <- selected_population_list[pool_indices]
-    
-    if (elite_size != 0) {
-    # Przypisywanie elity do nowej populacji (bez krzyzowania)
-      for (elite_index in 1:elite_size){
-        new_population_list[[elite_index]] <- selected_population_list[[elite_index]]['order']
-      }
-    }
-    
-    indices_odd <- seq(from=1, by=2, length.out=length(pool_indices))
-    
-    # Krzyzowanie pozostalych reprezentantow populacji
-    for (population_index in 1:(length(pool_indices)/2)){
-      if (population_index != length(pool_indices)/2){
-        parent_a <- pool[[population_index]]$order
-        parent_b <- pool[[population_index+1]]$order
-      }
-      # Dwa punkty obciecia
+    # Krzyzowanie reprezentantow populacji
+    for (population_index in 1:(length(new_population_list)/2)){
+        
+      index_parent_a <- sample(1:length(selected_population_list), size = 1)
+      index_parent_b <- sample(1:length(selected_population_list), size = 1)
+      parent_a <- selected_population_list[[index_parent_a]]$order
+      parent_b <- selected_population_list[[index_parent_b]]$order
+
+      # Dwa punkty odciecia
       gene1_index <- ceiling(runif(n=1) * length(parent_a))
       gene2_index <- ceiling(runif(n=1) * length(parent_a))
       start_point <- min(max(min(gene1_index, gene2_index), 2), length(parent_a)-1)
       end_point <- max(min(max(gene1_index, gene2_index), length(parent_a)-1), 2)
   
       # Krok 1 - Swapping
-      offspring_1 <- c(rep(0, start_point-1), parent_b[start_point:end_point], rep(0, length(parent_a)-(end_point)))
-      offspring_2 <- c(rep(0, start_point-1), parent_a[start_point:end_point], rep(0, length(parent_a)-(end_point)))
+      offspring_1 <- c(rep("0", start_point-1), parent_b[start_point:end_point], rep("0", length(parent_a)-(end_point)))
+      offspring_2 <- c(rep("0", start_point-1), parent_a[start_point:end_point], rep("0", length(parent_a)-(end_point)))
   
-      # Kork 2 - pozostawienie niezduplikowanych genow
+      # Krok 2 - Pozostawienie niezduplikowanych genow
       for (i in 1:length(offspring_1)){
         if ((parent_a[i] %!in% parent_b[start_point:end_point]) & (i %!in% seq(start_point, end_point))){
           offspring_1[i] <- parent_a[i]
@@ -167,7 +155,7 @@
         }
       }
       
-      # Krok 3 - mapowanie pozostalych genow
+      # Krok 3 - Mapowanie pozostalych genow
       mapping_matrix <- matrix(c(parent_a[start_point:end_point], parent_b[start_point:end_point]), nrow = 2, byrow = TRUE)
       for (ii in 1:length(offspring_1)){
         
@@ -209,50 +197,10 @@
       # Przypisywanie offspringow do nowej populacji
       offspring_1_pop_index <- indices_odd[population_index]
       offspring_2_pop_index <- indices_odd[population_index] + 1
-      new_population_list[[elite_size+offspring_1_pop_index]] <- list(order = offspring_1)
-      new_population_list[[elite_size+offspring_2_pop_index]] <- list(order = offspring_2)
+      new_population_list[[offspring_1_pop_index]] <- list(order = offspring_1)
+      new_population_list[[offspring_2_pop_index]] <- list(order = offspring_2)
     }
     
-    return(new_population_list)
-  }
-
-  
-  
-  crossover_operator_2 <- function(selected_population_list, elite_size){
-    # Krzyzowanie v2
-    
-    new_population_list <- vector(mode='list', length=length(selected_population_list))
-    # Pula rodzicielska (z wykluczeniem elity)
-    pool_indices <- sample(setdiff(1:length(selected_population_list), 1:elite_size), size = length(selected_population_list)-elite_size, replace = FALSE)
-    pool <- selected_population_list[pool_indices]
-    # Przypisywanie elity do nowej populacji (bez krzyzowania)
-    for (elite_index in 1:elite_size){
-      new_population_list[[elite_index]] <- selected_population_list[[elite_index]]['order']
-    }
-    # Krzyzowanie pozostalych reprezentantow populacji
-    for (population_index in 1:(length(pool_indices))){
-      if (population_index != length(pool_indices)){
-        parent_a <- pool[[population_index]]$order
-        parent_b <- pool[[population_index+1]]$order
-      } 
-      gene1 <- ceiling(runif(n=1) * length(parent_a))
-      gene2 <- ceiling(runif(n=1) * length(parent_a))
-      start_point <- min(gene1, gene2)
-      end_point <- max(gene1, gene2)
-      
-      # Tworzenie offspring'a
-      sub_child_1 <- parent_a[start_point:end_point]
-      sub_child_2 <- c()
-      for (i in parent_b){
-        if (i %!in% sub_child_1){
-          sub_child_2 <- c(sub_child_2, i)
-        }
-      }
-      offspring <- c(sub_child_1, sub_child_2)
-      
-      # Przypisywanie offspring'a do nowej populacji
-      new_population_list[[population_index+elite_size]] <- list(order = offspring)
-    }
     return(new_population_list)
   }
   
@@ -333,7 +281,7 @@
       # Operator selekcji
       selected_population_list <- selection_operator(population_list, elite_size=elite_size)
       # Operator krzyzowania
-      crossover_list <- crossover_operator_1(selected_population_list, elite_size=elite_size)
+      crossover_list <- crossover_operator_pmx(selected_population_list)
       # Operator mutacji
       mutation_list <- mutation_operator(crossover_list, mutation_rate=mutation_rate)  
       # Przypisywanie nowej populacji
@@ -353,10 +301,10 @@
 # Uruchamianie algorytmu (wlasna implementacja) __________________________________________________________________________________________
 
 # PARAMETRY
-pop_size <- 150
-elite_size <- 1
-mutation_rate <- 0.2
-n_iteration <- 500
+pop_size <- 100
+elite_size <- 2
+mutation_rate <- 0.05
+n_iteration <- 400
 
 # Uruchamianie algorytu GA
 best_result_list <- run_GA(pop_size, elite_size, mutation_rate, n_iteration, post_box_delivery, population_list)
@@ -415,9 +363,12 @@ tourLength <- function(tour, distMatrix) {
 tpsFitness <- function(tour, ...) 1/tourLength(tour, ...)
 
 # Uruchamianie GA
+start_time <- Sys.time()
 GA.fit <- ga(type = "permutation", fitness = tpsFitness, distMatrix = distance_matrix, lower = 1, 
-             upper = nrow(post_box_delivery), popSize = 10, maxiter = 1000, run = 200, pmutation = 0.05, 
+             upper = nrow(post_box_delivery), popSize = 20, maxiter = 1000, run = 200, pmutation = 0.05, elitism=1,
              monitor = NULL)
+end_time <- Sys.time()
+print(paste('Execution total time:', end_time-start_time))
 
 
 GA_post_box_solution_indices <- as.vector(GA.fit@solution[1,])
